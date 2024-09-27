@@ -14,19 +14,17 @@ class ImportKeysCommand extends Command
         parent::__construct();
     }
 
-
     public function handle()
     {
         $keys = $this->service->importKeysPrepare();
 
         $status = $this->service->importKeys($keys);
 
-        if($status->successful()){
+        if ($status->successful()) {
             $this->info('Keys are imported.');
-        }else{
+        } else {
             $status->throw();
             $this->error('Something went wrong.');
         }
     }
-
 }

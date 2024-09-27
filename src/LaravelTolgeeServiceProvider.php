@@ -20,13 +20,13 @@ class LaravelTolgeeServiceProvider extends PackageServiceProvider
             ->name('laravel-tolgee')
             ->hasConfigFile('tolgee')
             ->hasCommands([
-                ImportKeysCommand::class
+                ImportKeysCommand::class,
             ]);
     }
 
     public function register(): void
     {
-        $this->app->bind('laravel-tolgee', fn($app) => app(TolgeeService::class));
+        $this->app->bind('laravel-tolgee', fn ($app) => app(TolgeeService::class));
 
         parent::register();
     }
