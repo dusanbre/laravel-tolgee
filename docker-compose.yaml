@@ -1,0 +1,7 @@
+services:
+  composer:
+    image: composer
+    volumes:
+      - ./:/app
+    profiles:
+      - tools
