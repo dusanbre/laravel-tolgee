@@ -36,7 +36,7 @@ class TolgeeService
             ->asJson()
             ->acceptJson()
             ->post(
-                $this->config['base_url'] . '/v2/projects/' . $this->config['project_id'] . '/keys/import',
+                $this->config['base_url'].'/v2/projects/'.$this->config['project_id'].'/keys/import',
                 ['keys' => $prepareForTolgee]
             );
 
@@ -67,15 +67,15 @@ class TolgeeService
             }
         }
 
-        if ($this->files->exists($this->config['lang_path'] . '/vendor')) {
-            foreach ($this->files->directories($this->config['lang_path'] . '/vendor') as $langPath) {
+        if ($this->files->exists($this->config['lang_path'].'/vendor')) {
+            foreach ($this->files->directories($this->config['lang_path'].'/vendor') as $langPath) {
                 $locale = basename($langPath);
 
-                foreach ($this->files->allFiles($langPath . '/en') as $file) {
+                foreach ($this->files->allFiles($langPath.'/en') as $file) {
                     $info = pathinfo($file);
 
                     $keyName = Str::replace('lang/', '', $info['dirname']);
-                    $keyName = Str::replace('/', '.', $keyName) . '.' . $info['filename'];
+                    $keyName = Str::replace('/', '.', $keyName).'.'.$info['filename'];
 
                     $translations = include $file;
 
