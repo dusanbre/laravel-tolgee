@@ -20,6 +20,53 @@ class TolgeeService
         $this->config = $app['config']['tolgee'];
     }
 
+    public function syncTranslations()
+    {
+        $languageTags = $this->getLanguagesTags();
+
+        $translations = $this->getAllTranslations($languageTags);
+
+        foreach (Arr::except($translations, 'en') as $locale => $translation) {
+            dd($translation);
+        }
+    }
+
+    private function getLanguagesTags()
+    {
+        $langs = [];
+        $init = $this->getAllLanguages();
+
+        for ($page = 0; $page < $init['page']['totalPages']; $page++) {
+            $data = $this->getAllLanguages($page);
+            $target = data_get($data, '_embedded.languages');
+            $pluck = Arr::pluck($target, 'tag');
+            $langs = array_merge($langs, $pluck);
+        }
+
+        return $langs;
+    }
+
+    public function getAllLanguages(int $page = 0)
+    {
+        return Http::withHeader('X-API-Key', $this->config['api_key'])
+            ->withQueryParameters(['page' => $page, 'pageSize' => 1000])
+            ->asJson()
+            ->acceptJson()
+            ->get($this->config['base_url'] . '/v2/projects/' . $this->config['project_id'] . '/languages')
+            ->json();
+    }
+
+    public function getAllTranslations(array $languages = ['en'])
+    {
+        $langs = implode(',', $languages);
+
+        return Http::withHeader('X-API-Key', $this->config['api_key'])
+            ->asJson()
+            ->acceptJson()
+            ->get($this->config['base_url'] . '/v2/projects/' . $this->config['project_id'] . '/translations/' . $langs)
+            ->json();
+    }
+
     public function deleteAllKeys()
     {
         $keyIds = [];
@@ -35,7 +82,7 @@ class TolgeeService
         return Http::withHeader('X-API-Key', $this->config['api_key'])
             ->asJson()
             ->acceptJson()
-            ->delete($this->config['base_url'].'/v2/projects/'.$this->config['project_id'].'/keys', [
+            ->delete($this->config['base_url'] . '/v2/projects/' . $this->config['project_id'] . '/keys', [
                 'ids' => $keyIds,
             ]);
     }
@@ -46,7 +93,7 @@ class TolgeeService
             ->withHeader('X-API-Key', $this->config['api_key'])
             ->asJson()
             ->acceptJson()
-            ->get($this->config['base_url'].'/v2/projects/'.$this->config['project_id'].'/keys')
+            ->get($this->config['base_url'] . '/v2/projects/' . $this->config['project_id'] . '/keys')
             ->json();
     }
 
@@ -67,7 +114,7 @@ class TolgeeService
             ->asJson()
             ->acceptJson()
             ->post(
-                $this->config['base_url'].'/v2/projects/'.$this->config['project_id'].'/keys/import',
+                $this->config['base_url'] . '/v2/projects/' . $this->config['project_id'] . '/keys/import',
                 ['keys' => $prepareForTolgee]
             );
 
@@ -94,19 +141,22 @@ class TolgeeService
 
                 $translations = include $file;
 
-                $return[$locale][$info['filename']] = $translations;
+                $return[$info['filename']] = $translations;
             }
         }
 
-        if ($this->files->exists($this->config['lang_path'].'/vendor')) {
-            foreach ($this->files->directories($this->config['lang_path'].'/vendor') as $langPath) {
+        if ($this->files->exists($this->config['lang_path'] . '/vendor')) {
+            foreach ($this->files->directories($this->config['lang_path'] . '/vendor') as $langPath) {
                 $locale = basename($langPath);
 
-                foreach ($this->files->allFiles($langPath.'/en') as $file) {
+                foreach ($this->files->allFiles($langPath . '/en') as $file) {
                     $info = pathinfo($file);
 
                     $keyName = Str::replace('lang/', '', $info['dirname']);
-                    $keyName = Str::replace('/', '.', $keyName).'.'.$info['filename'];
+                    $keyName = Str::replace('/en', '/', $keyName);
+                    $keyName = Str::replace('/', '.', $keyName) . '.' . $info['filename'];
+                    $keyName = Str::replace('..', '.', $keyName);
+                    $keyName = Str::finish($keyName, '');
 
                     $translations = include $file;
 
@@ -116,7 +166,7 @@ class TolgeeService
         }
 
         foreach ($this->files->files($this->config['lang_path']) as $jsonFile) {
-            if (! str_contains($jsonFile, '.json')) {
+            if (!str_contains($jsonFile, '.json')) {
                 continue;
             }
 
@@ -125,7 +175,7 @@ class TolgeeService
             $translations = Lang::getLoader()->load($locale, '*', '*');
             if ($translations && is_array($translations)) {
                 foreach ($translations as $key => $value) {
-                    $return[$locale]['json'][$key] = $value;
+                    $return['json'][$key] = $value;
                 }
             }
         }

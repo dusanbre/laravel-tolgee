@@ -4,6 +4,7 @@ namespace LaravelTolgee;
 
 use LaravelTolgee\Commands\DeleteAllKeysCommand;
 use LaravelTolgee\Commands\ImportKeysCommand;
+use LaravelTolgee\Commands\SyncTranslationsCommand;
 use LaravelTolgee\Services\TolgeeService;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
@@ -23,6 +24,7 @@ class LaravelTolgeeServiceProvider extends PackageServiceProvider
             ->hasCommands([
                 ImportKeysCommand::class,
                 DeleteAllKeysCommand::class,
+                SyncTranslationsCommand::class
             ]);
     }
 
