@@ -9,22 +9,19 @@ class ImportKeysCommand extends Command
 {
     protected $signature = 'tolgee:import-keys';
 
-    public function __construct(private TolgeeService $service)
+    public function __construct(private readonly TolgeeService $service)
     {
         parent::__construct();
     }
 
-    public function handle()
+    public function handle(): void
     {
-        $keys = $this->service->importKeysPrepare();
+        $response = $this->service->importKeys();
 
-        $status = $this->service->importKeys($keys);
-
-        if ($status->successful()) {
+        if ($response->successful()) {
             $this->info('Keys are imported.');
         } else {
-            $status->throw();
-            $this->error('Something went wrong.');
+            $response->throw();
         }
     }
 }
