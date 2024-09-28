@@ -10,6 +10,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Str;
+use LaravelTolgee\Utils\IO;
 
 class TolgeeService
 {
@@ -22,12 +23,35 @@ class TolgeeService
 
     public function syncTranslations()
     {
-        $languageTags = $this->getLanguagesTags();
+        $languages = $this->getLanguagesTags();
 
-        $translations = $this->getAllTranslations($languageTags);
+        $initial = $this->getAllTranslations();
 
-        foreach (Arr::except($translations, 'en') as $locale => $translation) {
-            dd($translation);
+        for ($page = 0; $page < $initial['page']['totalPages']; $page++) {
+            $translations = $this->getAllTranslations($page);
+
+            foreach ($translations['_embedded']['keys'] as $translationItem) {
+                $keyName = $translationItem['keyName'];
+                $filePath = $translationItem['keyNamespace'];
+
+                foreach ($translationItem['translations'] as $locale => $translation) {
+                    if ($locale === 'en') {
+                        continue;
+                    }
+
+                    $localPathName = Str::replace('en', $locale, $filePath);
+                    $writeArray = [$keyName => $translation['text']]; // TODO: Finish this
+                    $writeContent = '<?php ' . PHP_EOL . 'return ' . var_export($writeArray, true) . ';';
+
+                    dd($writeContent);
+
+                    if (!$this->files->exists($localPathName)) {
+                        $this->files->ensureDirectoryExists(dirname($localPathName));
+                        IO::write($writeContent, $localPathName);
+                        exit();
+                    }
+                }
+            }
         }
     }
 
@@ -56,14 +80,15 @@ class TolgeeService
             ->json();
     }
 
-    public function getAllTranslations(array $languages = ['en'])
+    public function getAllTranslations(int $page = 0)
     {
-        $langs = implode(',', $languages);
-
         return Http::withHeader('X-API-Key', $this->config['api_key'])
             ->asJson()
             ->acceptJson()
-            ->get($this->config['base_url'] . '/v2/projects/' . $this->config['project_id'] . '/translations/' . $langs)
+            ->get(
+                $this->config['base_url'] . '/v2/projects/' . $this->config['project_id'] . '/translations',
+                ['size' => 20, 'page' => $page]
+            )
             ->json();
     }
 
@@ -100,67 +125,38 @@ class TolgeeService
     public function importKeys(): PromiseInterface|Response
     {
         $keys = $this->importKeysPrepare();
-        $prepareForTolgee = [];
 
-        foreach ($keys as $key => $value) {
-            if (is_array($value)) {
-                continue;
-            }
-
-            $prepareForTolgee[] = ['name' => $key, 'translations' => ['en' => $value]];
-        }
-
-        $client = Http::withHeader('X-API-Key', $this->config['api_key'])
+        return Http::withHeader('X-API-Key', $this->config['api_key'])
             ->asJson()
             ->acceptJson()
-            ->post(
-                $this->config['base_url'] . '/v2/projects/' . $this->config['project_id'] . '/keys/import',
-                ['keys' => $prepareForTolgee]
-            );
-
-        return $client;
+            ->post($this->config['base_url'] . '/v2/projects/' . $this->config['project_id'] . '/keys/import', ['keys' => $keys]);
     }
 
     public function importKeysPrepare(): array
     {
+        $prepare = [];
         $return = [];
 
         foreach ($this->files->directories($this->config['lang_path']) as $langPath) {
             $locale = basename($langPath);
-
-            if ($locale === 'vendor') {
-                continue;
-            }
 
             if ($locale !== 'en') {
                 continue;
             }
 
             foreach ($this->files->allfiles($langPath) as $file) {
-                $info = pathinfo($file);
+                $translations = include_once $file;
 
-                $translations = include $file;
-
-                $return[$info['filename']] = $translations;
+                $prepare[$file->getPathname()] = Arr::dot($translations);
             }
         }
 
         if ($this->files->exists($this->config['lang_path'] . '/vendor')) {
             foreach ($this->files->directories($this->config['lang_path'] . '/vendor') as $langPath) {
-                $locale = basename($langPath);
-
                 foreach ($this->files->allFiles($langPath . '/en') as $file) {
-                    $info = pathinfo($file);
-
-                    $keyName = Str::replace('lang/', '', $info['dirname']);
-                    $keyName = Str::replace('/en', '/', $keyName);
-                    $keyName = Str::replace('/', '.', $keyName) . '.' . $info['filename'];
-                    $keyName = Str::replace('..', '.', $keyName);
-                    $keyName = Str::finish($keyName, '');
-
                     $translations = include $file;
 
-                    $return[$keyName] = $translations;
+                    $prepare[$file->getPathname()] = Arr::dot($translations);
                 }
             }
         }
@@ -173,13 +169,18 @@ class TolgeeService
             $locale = basename($jsonFile, '.json');
 
             $translations = Lang::getLoader()->load($locale, '*', '*');
-            if ($translations && is_array($translations)) {
-                foreach ($translations as $key => $value) {
-                    $return['json'][$key] = $value;
+            $prepare[$jsonFile->getPathname()] = Arr::dot($translations);
+        }
+
+        foreach ($prepare as $namespace => $keys) {
+            foreach ($keys as $key => $value) {
+                if (is_array($value)) {
+                    continue;
                 }
+                $return[] = ['name' => $key, 'namespace' => $namespace, 'translations' => ['en' => $value]];
             }
         }
 
-        return Arr::dot($return);
+        return $return;
     }
 }
