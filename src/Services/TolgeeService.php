@@ -35,8 +35,8 @@ class TolgeeService
         return Http::withHeader('X-API-Key', $this->config['api_key'])
             ->asJson()
             ->acceptJson()
-            ->delete($this->config['base_url'] . '/v2/projects/' . $this->config['project_id'] . '/keys', [
-                'ids' => $keyIds
+            ->delete($this->config['base_url'].'/v2/projects/'.$this->config['project_id'].'/keys', [
+                'ids' => $keyIds,
             ]);
     }
 
@@ -46,7 +46,7 @@ class TolgeeService
             ->withHeader('X-API-Key', $this->config['api_key'])
             ->asJson()
             ->acceptJson()
-            ->get($this->config['base_url'] . '/v2/projects/' . $this->config['project_id'] . '/keys')
+            ->get($this->config['base_url'].'/v2/projects/'.$this->config['project_id'].'/keys')
             ->json();
     }
 
@@ -116,7 +116,7 @@ class TolgeeService
         }
 
         foreach ($this->files->files($this->config['lang_path']) as $jsonFile) {
-            if (!str_contains($jsonFile, '.json')) {
+            if (! str_contains($jsonFile, '.json')) {
                 continue;
             }
 

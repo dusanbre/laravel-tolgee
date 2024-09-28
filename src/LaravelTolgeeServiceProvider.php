@@ -2,7 +2,6 @@
 
 namespace LaravelTolgee;
 
-use LaravelTolgee\Commands\CheckConnectionCommand;
 use LaravelTolgee\Commands\DeleteAllKeysCommand;
 use LaravelTolgee\Commands\ImportKeysCommand;
 use LaravelTolgee\Services\TolgeeService;
@@ -23,13 +22,13 @@ class LaravelTolgeeServiceProvider extends PackageServiceProvider
             ->hasConfigFile('tolgee')
             ->hasCommands([
                 ImportKeysCommand::class,
-                DeleteAllKeysCommand::class
+                DeleteAllKeysCommand::class,
             ]);
     }
 
     public function register(): void
     {
-        $this->app->bind('laravel-tolgee', fn($app) => app(TolgeeService::class));
+        $this->app->bind('laravel-tolgee', fn ($app) => app(TolgeeService::class));
 
         parent::register();
     }
