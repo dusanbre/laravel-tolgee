@@ -18,7 +18,7 @@ class ImportKeysCommand extends Command
 
     public function handle(): void
     {
-        $this->service->importKeys((bool)$this->option('with-vendor'));
+        $this->service->importKeys((bool)$this->option('with-vendors'));
         $response = $this->service->importKeys();
 
         if ($response->successful()) {
