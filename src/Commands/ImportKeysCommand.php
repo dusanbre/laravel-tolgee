@@ -7,24 +7,23 @@ use LaravelTolgee\Services\TolgeeService;
 
 class ImportKeysCommand extends Command
 {
-    protected $signature = 'tolgee:import-keys';
+    protected $signature = 'tolgee:keys:sync';
 
-    public function __construct(private TolgeeService $service)
+    protected $description = 'Command will sync all keys from local project files to Tolgee.This will not overwrite existing keys.';
+
+    public function __construct(private readonly TolgeeService $service)
     {
         parent::__construct();
     }
 
-    public function handle()
+    public function handle(): void
     {
-        $keys = $this->service->importKeysPrepare();
+        $response = $this->service->importKeys();
 
-        $status = $this->service->importKeys($keys);
-
-        if ($status->successful()) {
+        if ($response->successful()) {
             $this->info('Keys are imported.');
         } else {
-            $status->throw();
-            $this->error('Something went wrong.');
+            $response->throw();
         }
     }
 }
