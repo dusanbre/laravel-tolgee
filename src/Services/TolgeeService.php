@@ -3,10 +3,10 @@
 namespace LaravelTolgee\Services;
 
 use GuzzleHttp\Promise\PromiseInterface;
-use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Str;
 use LaravelTolgee\Integration\Tolgee;
@@ -18,9 +18,9 @@ class TolgeeService
 {
     private array $config;
 
-    public function __construct(Application $app, private readonly Filesystem $files, private readonly Tolgee $tolgee)
+    public function __construct(private readonly Filesystem $files, private readonly Tolgee $tolgee)
     {
-        $this->config = $app['config']['tolgee'];
+        $this->config = Config::get('tolgee');
     }
 
     /**

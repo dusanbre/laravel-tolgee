@@ -11,14 +11,12 @@ use Illuminate\Support\Facades\Http;
 class Tolgee
 {
     private PendingRequest $client;
-    private array $config;
 
     public function __construct()
     {
-        $this->config = Config::get('tolgee');
-        $this->client = Http::withHeader('X-API-Key', $this->config['api_key'])
-            ->withUrlParameters(['project' => $this->config['project_id']])
-            ->baseUrl($this->config['host']);
+        $this->client = Http::withHeader('X-API-Key', Config::get('tolgee.api_key'))
+            ->withUrlParameters(['project' => Config::get('tolgee.project_id')])
+            ->baseUrl(Config::get('tolgee.host'));
     }
 
     public function importKeysRequest(array $data): PromiseInterface|Response
