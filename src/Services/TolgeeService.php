@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Str;
 use LaravelTolgee\Utils\IO;
+use LaravelTolgee\Utils\JSON;
+use LaravelTolgee\Utils\VarExport;
 
 class TolgeeService
 {
@@ -21,11 +23,11 @@ class TolgeeService
         $this->config = $app['config']['tolgee'];
     }
 
-    public function syncTranslations()
+    public function syncTranslations(): true
     {
-        $languages = $this->getLanguagesTags();
-
         $initial = $this->getAllTranslations();
+
+        $prepareWriteArray = [];
 
         for ($page = 0; $page < $initial['page']['totalPages']; $page++) {
             $translations = $this->getAllTranslations($page);
@@ -39,45 +41,34 @@ class TolgeeService
                         continue;
                     }
 
-                    $localPathName = Str::replace('en', $locale, $filePath);
+                    $localPathName = Str::replace('/en', '/' . $locale, $filePath);
                     $writeArray = [$keyName => $translation['text']]; // TODO: Finish this
-                    $writeContent = '<?php ' . PHP_EOL . 'return ' . var_export($writeArray, true) . ';';
 
-                    dd($writeContent);
-
-                    if (!$this->files->exists($localPathName)) {
-                        $this->files->ensureDirectoryExists(dirname($localPathName));
-                        IO::write($writeContent, $localPathName);
-                        exit();
-                    }
+                    $prepareWriteArray[$localPathName] = array_key_exists($localPathName, $prepareWriteArray)
+                        ? array_merge($prepareWriteArray[$localPathName], Arr::undot($writeArray))
+                        : Arr::undot($writeArray);
                 }
             }
         }
-    }
 
-    private function getLanguagesTags()
-    {
-        $langs = [];
-        $init = $this->getAllLanguages();
+        foreach ($prepareWriteArray as $localPathName => $writeArray) {
+            $fileContent = <<<'EOT'
+                            <?php
+                            
+                            return {{translations}};
+                            
+                            EOT;
+            $prettyWriteArray = VarExport::pretty(Arr::undot($writeArray), ['array-align' => true]);
+            $fileContent = Str::replace('{{translations}}', $prettyWriteArray, $fileContent);
 
-        for ($page = 0; $page < $init['page']['totalPages']; $page++) {
-            $data = $this->getAllLanguages($page);
-            $target = data_get($data, '_embedded.languages');
-            $pluck = Arr::pluck($target, 'tag');
-            $langs = array_merge($langs, $pluck);
+            $this->files->ensureDirectoryExists(dirname($localPathName));
+
+            Str::contains($localPathName, '.json')
+                ? IO::write(JSON::jsonEncode(Arr::undot($writeArray)), $localPathName)
+                : IO::write($fileContent, $localPathName);
         }
 
-        return $langs;
-    }
-
-    public function getAllLanguages(int $page = 0)
-    {
-        return Http::withHeader('X-API-Key', $this->config['api_key'])
-            ->withQueryParameters(['page' => $page, 'pageSize' => 1000])
-            ->asJson()
-            ->acceptJson()
-            ->get($this->config['base_url'] . '/v2/projects/' . $this->config['project_id'] . '/languages')
-            ->json();
+        return true;
     }
 
     public function getAllTranslations(int $page = 0)
@@ -182,5 +173,30 @@ class TolgeeService
         }
 
         return $return;
+    }
+
+    private function getLanguagesTags()
+    {
+        $langs = [];
+        $init = $this->getAllLanguages();
+
+        for ($page = 0; $page < $init['page']['totalPages']; $page++) {
+            $data = $this->getAllLanguages($page);
+            $target = data_get($data, '_embedded.languages');
+            $pluck = Arr::pluck($target, 'tag');
+            $langs = array_merge($langs, $pluck);
+        }
+
+        return $langs;
+    }
+
+    public function getAllLanguages(int $page = 0)
+    {
+        return Http::withHeader('X-API-Key', $this->config['api_key'])
+            ->withQueryParameters(['page' => $page, 'pageSize' => 1000])
+            ->asJson()
+            ->acceptJson()
+            ->get($this->config['base_url'] . '/v2/projects/' . $this->config['project_id'] . '/languages')
+            ->json();
     }
 }

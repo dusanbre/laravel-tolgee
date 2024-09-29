@@ -19,7 +19,8 @@ class SyncTranslationsCommand extends Command
     public function handle()
     {
         $res = $this->service->syncTranslations();
-        dd($res);
+
+        $res ? $this->info('Translations are synced.') : $this->error('Something went wrong.');
     }
 
 }
