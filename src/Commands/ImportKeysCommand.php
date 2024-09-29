@@ -7,7 +7,7 @@ use LaravelTolgee\Services\TolgeeService;
 
 class ImportKeysCommand extends Command
 {
-    protected $signature = 'tolgee:keys:sync';
+    protected $signature = 'tolgee:keys:sync {--with-vendors : Include vendor files}';
 
     protected $description = 'Command will sync all keys from local project files to Tolgee.This will not overwrite existing keys.';
 
@@ -18,6 +18,7 @@ class ImportKeysCommand extends Command
 
     public function handle(): void
     {
+        $this->service->importKeys((bool)$this->option('with-vendors'));
         $response = $this->service->importKeys();
 
         if ($response->successful()) {

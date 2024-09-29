@@ -7,9 +7,9 @@ use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Str;
+use LaravelTolgee\Integration\Tolgee;
 use LaravelTolgee\Utils\IO;
 use LaravelTolgee\Utils\JSON;
 use LaravelTolgee\Utils\VarExport;
@@ -18,19 +18,22 @@ class TolgeeService
 {
     private array $config;
 
-    public function __construct(Application $app, private readonly Filesystem $files)
+    public function __construct(Application $app, private readonly Filesystem $files, private readonly Tolgee $tolgee)
     {
         $this->config = $app['config']['tolgee'];
     }
 
+    /**
+     * Sync translations from Tolgee service into a local files
+     */
     public function syncTranslations(): true
     {
-        $initial = $this->getAllTranslations();
-
         $prepareWriteArray = [];
+        $initial = $this->tolgee->getTranslationsRequest(parse: true);
 
+        // Loop over translations pages, extract and prepare required data
         for ($page = 0; $page < $initial['page']['totalPages']; $page++) {
-            $translations = $this->getAllTranslations($page);
+            $translations = $this->tolgee->getTranslationsRequest($page, true);
 
             foreach ($translations['_embedded']['keys'] as $translationItem) {
                 $keyName = $translationItem['keyName'];
@@ -42,7 +45,7 @@ class TolgeeService
                     }
 
                     $localPathName = Str::replace('/en', '/' . $locale, $filePath);
-                    $writeArray = [$keyName => $translation['text']]; // TODO: Finish this
+                    $writeArray = [$keyName => $translation['text']];
 
                     $prepareWriteArray[$localPathName] = array_key_exists($localPathName, $prepareWriteArray)
                         ? array_merge($prepareWriteArray[$localPathName], Arr::undot($writeArray))
@@ -51,6 +54,7 @@ class TolgeeService
             }
         }
 
+        // Write content info localized files
         foreach ($prepareWriteArray as $localPathName => $writeArray) {
             $fileContent = <<<'EOT'
                             <?php
@@ -71,63 +75,34 @@ class TolgeeService
         return true;
     }
 
-    public function getAllTranslations(int $page = 0)
+    /**
+     * Flush all keys on Tolgee service
+     */
+    public function deleteKeys(): PromiseInterface|Response
     {
-        return Http::withHeader('X-API-Key', $this->config['api_key'])
-            ->asJson()
-            ->acceptJson()
-            ->get(
-                $this->config['base_url'] . '/v2/projects/' . $this->config['project_id'] . '/translations',
-                ['size' => 20, 'page' => $page]
-            )
-            ->json();
-    }
-
-    public function deleteAllKeys()
-    {
-        $keyIds = [];
-        $init = $this->getAllKeys();
+        $ids = [];
+        $init = $this->tolgee->getKeysRequest();
 
         for ($page = 0; $page < $init['page']['totalPages']; $page++) {
-            $data = $this->getAllKeys($page);
+            $data = $this->tolgee->getKeysRequest($page);
             $target = data_get($data, '_embedded.keys');
             $pluck = Arr::pluck($target, 'id');
-            $keyIds = array_merge($keyIds, $pluck);
+            $ids = array_merge($ids, $pluck);
         }
 
-        return Http::withHeader('X-API-Key', $this->config['api_key'])
-            ->asJson()
-            ->acceptJson()
-            ->delete($this->config['base_url'] . '/v2/projects/' . $this->config['project_id'] . '/keys', [
-                'ids' => $keyIds,
-            ]);
+        return $this->tolgee->deleteKeysRequest($ids);
     }
 
-    public function getAllKeys(int $page = 0)
-    {
-        return Http::withQueryParameters(['size' => 100, 'page' => $page])
-            ->withHeader('X-API-Key', $this->config['api_key'])
-            ->asJson()
-            ->acceptJson()
-            ->get($this->config['base_url'] . '/v2/projects/' . $this->config['project_id'] . '/keys')
-            ->json();
-    }
-
-    public function importKeys(): PromiseInterface|Response
-    {
-        $keys = $this->importKeysPrepare();
-
-        return Http::withHeader('X-API-Key', $this->config['api_key'])
-            ->asJson()
-            ->acceptJson()
-            ->post($this->config['base_url'] . '/v2/projects/' . $this->config['project_id'] . '/keys/import', ['keys' => $keys]);
-    }
-
-    public function importKeysPrepare(): array
+    /**
+     * Prepare and sync keys from local files into Tolgee service
+     * We can pass $withVendor var to include vendor files
+     */
+    public function importKeys(bool $withVendor = true): PromiseInterface|Response
     {
         $prepare = [];
-        $return = [];
+        $import = [];
 
+        // Prepare local .php files
         foreach ($this->files->directories($this->config['lang_path']) as $langPath) {
             $locale = basename($langPath);
 
@@ -142,16 +117,18 @@ class TolgeeService
             }
         }
 
-        if ($this->files->exists($this->config['lang_path'] . '/vendor')) {
+        // Prepare vendor translations
+        if ($this->files->exists($this->config['lang_path'] . '/vendor') && $withVendor) {
             foreach ($this->files->directories($this->config['lang_path'] . '/vendor') as $langPath) {
                 foreach ($this->files->allFiles($langPath . '/en') as $file) {
-                    $translations = include $file;
+                    $translations = include_once $file;
 
                     $prepare[$file->getPathname()] = Arr::dot($translations);
                 }
             }
         }
 
+        // Prepare json files translations
         foreach ($this->files->files($this->config['lang_path']) as $jsonFile) {
             if (!str_contains($jsonFile, '.json')) {
                 continue;
@@ -163,40 +140,16 @@ class TolgeeService
             $prepare[$jsonFile->getPathname()] = Arr::dot($translations);
         }
 
+        // Remap everything into Tolgee request format
         foreach ($prepare as $namespace => $keys) {
             foreach ($keys as $key => $value) {
                 if (is_array($value)) {
                     continue;
                 }
-                $return[] = ['name' => $key, 'namespace' => $namespace, 'translations' => ['en' => $value]];
+                $import[] = ['name' => $key, 'namespace' => $namespace, 'translations' => ['en' => $value]];
             }
         }
 
-        return $return;
-    }
-
-    private function getLanguagesTags()
-    {
-        $langs = [];
-        $init = $this->getAllLanguages();
-
-        for ($page = 0; $page < $init['page']['totalPages']; $page++) {
-            $data = $this->getAllLanguages($page);
-            $target = data_get($data, '_embedded.languages');
-            $pluck = Arr::pluck($target, 'tag');
-            $langs = array_merge($langs, $pluck);
-        }
-
-        return $langs;
-    }
-
-    public function getAllLanguages(int $page = 0)
-    {
-        return Http::withHeader('X-API-Key', $this->config['api_key'])
-            ->withQueryParameters(['page' => $page, 'pageSize' => 1000])
-            ->asJson()
-            ->acceptJson()
-            ->get($this->config['base_url'] . '/v2/projects/' . $this->config['project_id'] . '/languages')
-            ->json();
+        return $this->tolgee->importKeysRequest($import);
     }
 }

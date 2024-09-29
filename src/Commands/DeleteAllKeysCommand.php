@@ -18,7 +18,7 @@ class DeleteAllKeysCommand extends Command
 
     public function handle()
     {
-        $response = $this->service->deleteAllKeys();
+        $response = $this->service->deleteKeys();
 
         if ($response->successful()) {
             $this->info('All keys are deleted.');
