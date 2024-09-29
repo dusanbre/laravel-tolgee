@@ -136,6 +136,13 @@ You should be able to access Tolgee service on `http://localhost:9090`</br>
 When you setup is dockerized, you will need to set TOLGEE_HOST for docker internal network. In this case that would be
 `http://tolgee:8080`
 
+## Limitations
+
+You are need to use English as base language.</br>
+All operations are constrained to one project.
+
+This will be fixed/implemented in the future.
+
 ## Testing
 
 ```bash
