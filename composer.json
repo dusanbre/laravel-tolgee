@@ -1,11 +1,12 @@
 {
   "name": "dusanbre/laravel-tolgee",
   "version": "1.0.0",
-  "description": "This is my package laravel-tolgee",
+  "description": "Help with Laravel integration of Tolgee service",
   "keywords": [
     "Dusan Antonijevic",
     "laravel",
-    "laravel-tolgee"
+    "laravel-tolgee",
+    "tolgee"
   ],
   "homepage": "https://github.com/dusanbre/laravel-tolgee",
   "license": "MIT",
