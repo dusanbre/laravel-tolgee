@@ -4,6 +4,7 @@ namespace LaravelTolgee\Integration;
 
 use GuzzleHttp\Promise\PromiseInterface;
 use Illuminate\Http\Client\Response;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
 
@@ -50,10 +51,24 @@ class Tolgee
 
     public function getTranslationsRequest(int $page = 0, bool $parse = false): PromiseInterface|Response|array
     {
+        $languages = Http::withHeaders($this->headers)
+            ->withUrlParameters($this->urlParams)
+            ->withQueryParameters(['size' => 1000])
+            ->baseUrl($this->host)
+            ->get('v2/projects/{project}/languages')
+            ->json('_embedded.languages');
+
+        $languages = Arr::pluck($languages, 'tag');
+        $queryLanguages = '';
+
+        foreach ($languages as $language) {
+            $queryLanguages .= "languages={$language}&";
+        }
+
         $request = Http::withHeaders($this->headers)
             ->withUrlParameters($this->urlParams)
             ->baseUrl($this->host)
-            ->get('/v2/projects/{project}/translations', ['page' => $page]);
+            ->get('/v2/projects/{project}/translations?' . $queryLanguages . 'page=' . $page);
 
         return $parse ? $request->json() : $request;
     }
