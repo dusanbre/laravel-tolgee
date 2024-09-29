@@ -3,10 +3,10 @@
 namespace LaravelTolgee\Services;
 
 use GuzzleHttp\Promise\PromiseInterface;
-use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Str;
 use LaravelTolgee\Integration\Tolgee;
@@ -18,9 +18,9 @@ class TolgeeService
 {
     private array $config;
 
-    public function __construct(Application $app, private readonly Filesystem $files, private readonly Tolgee $tolgee)
+    public function __construct(private readonly Filesystem $files, private readonly Tolgee $tolgee)
     {
-        $this->config = $app['config']['tolgee'];
+        $this->config = Config::get('tolgee');
     }
 
     /**
@@ -81,10 +81,10 @@ class TolgeeService
     public function deleteKeys(): PromiseInterface|Response
     {
         $ids = [];
-        $init = $this->tolgee->getKeysRequest();
+        $init = $this->tolgee->getKeysRequest(parse: true);
 
         for ($page = 0; $page < $init['page']['totalPages']; $page++) {
-            $data = $this->tolgee->getKeysRequest($page);
+            $data = $this->tolgee->getKeysRequest($page, true);
             $target = data_get($data, '_embedded.keys');
             $pluck = Arr::pluck($target, 'id');
             $ids = array_merge($ids, $pluck);
@@ -111,7 +111,7 @@ class TolgeeService
             }
 
             foreach ($this->files->allfiles($langPath) as $file) {
-                $translations = include_once $file;
+                $translations = include $file;
 
                 $prepare[$file->getPathname()] = Arr::dot($translations);
             }
@@ -121,7 +121,7 @@ class TolgeeService
         if ($this->files->exists($this->config['lang_path'] . '/vendor') && $withVendor) {
             foreach ($this->files->directories($this->config['lang_path'] . '/vendor') as $langPath) {
                 foreach ($this->files->allFiles($langPath . '/en') as $file) {
-                    $translations = include_once $file;
+                    $translations = include $file;
 
                     $prepare[$file->getPathname()] = Arr::dot($translations);
                 }
