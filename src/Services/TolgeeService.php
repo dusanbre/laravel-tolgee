@@ -136,6 +136,10 @@ class TolgeeService
 
             $locale = basename($jsonFile, '.json');
 
+            if ($locale !== 'en') {
+                continue;
+            }
+
             $translations = Lang::getLoader()->load($locale, '*', '*');
             $prepare[$jsonFile->getPathname()] = Arr::dot($translations);
         }
