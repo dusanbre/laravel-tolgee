@@ -30,6 +30,7 @@ class TolgeeService
     {
         $prepareWriteArray = [];
         $initial = $this->tolgee->getTranslationsRequest(parse: true);
+        $prepare = [];
 
         // Loop over translations pages, extract and prepare required data
         for ($page = 0; $page < $initial['page']['totalPages']; $page++) {
@@ -47,9 +48,8 @@ class TolgeeService
                     $localPathName = Str::replace('/en', '/' . $locale, $filePath);
                     $writeArray = [$keyName => $translation['text']];
 
-                    $prepareWriteArray[$localPathName] = array_key_exists($localPathName, $prepareWriteArray)
-                        ? array_merge($prepareWriteArray[$localPathName], Arr::undot($writeArray))
-                        : Arr::undot($writeArray);
+                    $prepare[$localPathName][] = $writeArray;
+                    $prepareWriteArray[$localPathName][] = $writeArray;
                 }
             }
         }
@@ -62,13 +62,13 @@ class TolgeeService
                             return {{translations}};
                             
                             EOT;
-            $prettyWriteArray = VarExport::pretty(Arr::undot($writeArray), ['array-align' => true]);
+            $prettyWriteArray = VarExport::pretty(Arr::undot(Arr::collapse($writeArray)), ['array-align' => true]);
             $fileContent = Str::replace('{{translations}}', $prettyWriteArray, $fileContent);
 
             $this->files->ensureDirectoryExists(dirname($localPathName));
 
             Str::contains($localPathName, '.json')
-                ? IO::write(JSON::jsonEncode(Arr::undot($writeArray)), $localPathName)
+                ? IO::write(JSON::jsonEncode(Arr::undot(Arr::collapse($writeArray))), $localPathName)
                 : IO::write($fileContent, $localPathName);
         }
 
