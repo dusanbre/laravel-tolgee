@@ -56,6 +56,11 @@ return [
      * Override base locale translations files.
      */
     'override' => env('TOLGEE_OVERRIDE', false),
+    
+    /**
+     * Accepted states for translations.
+     */
+    'accepted_states' => explode(",", env('TOLGEE_ACCEPTED_STATES', 'REVIEWED')),
 ];
 ```
 

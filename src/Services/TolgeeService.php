@@ -37,7 +37,10 @@ class TolgeeService
             $filePath = $translationItem['keyNamespace'];
 
             foreach ($translationItem['translations'] as $locale => $translation) {
-                if ($locale === $this->config["locale"] && !$this->config["override"]) continue;
+                if (
+                    ($locale === $this->config["locale"] && !$this->config["override"]) ||
+                    ($locale !== $this->config["locale"] && !in_array($translation['state'], $this->config["accepted_states"]))
+                ) continue;
 
                 $localPathName = Str::replace('/'.$this->config["locale"], '/' . $locale, $filePath);
                 $writeArray = [$keyName => $translation['text']];
