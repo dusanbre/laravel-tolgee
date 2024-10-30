@@ -25,5 +25,10 @@ return [
      * Api key needs to have all permissions to manage project.
      */
     'api_key' => env('TOLGEE_API_KEY'),
+    
+    /**
+     * Locale of the project.
+     */
+    'locale' => env('TOLGEE_LOCALE', 'en'),
 
 ];

@@ -41,11 +41,11 @@ class TolgeeService
                 $filePath = $translationItem['keyNamespace'];
 
                 foreach ($translationItem['translations'] as $locale => $translation) {
-                    if ($locale === 'en') {
+                    if ($locale === $this->config["locale"]) {
                         continue;
                     }
 
-                    $localPathName = Str::replace('/en', '/' . $locale, $filePath);
+                    $localPathName = Str::replace('/'.$this->config["locale"], '/' . $locale, $filePath);
                     $writeArray = [$keyName => $translation['text']];
 
                     $prepare[$localPathName][] = $writeArray;
@@ -106,7 +106,7 @@ class TolgeeService
         foreach ($this->files->directories($this->config['lang_path']) as $langPath) {
             $locale = basename($langPath);
 
-            if ($locale !== 'en') {
+            if ($locale !== $this->config["locale"]) {
                 continue;
             }
 
@@ -120,7 +120,7 @@ class TolgeeService
         // Prepare vendor translations
         if ($this->files->exists($this->config['lang_path'] . '/vendor') && $withVendor) {
             foreach ($this->files->directories($this->config['lang_path'] . '/vendor') as $langPath) {
-                foreach ($this->files->allFiles($langPath . '/en') as $file) {
+                foreach ($this->files->allFiles($langPath . '/'.$this->config["locale"]) as $file) {
                     $translations = include $file;
 
                     $prepare[$file->getPathname()] = Arr::dot($translations);
@@ -136,7 +136,7 @@ class TolgeeService
 
             $locale = basename($jsonFile, '.json');
 
-            if ($locale !== 'en') {
+            if ($locale !== $this->config["locale"]) {
                 continue;
             }
 
@@ -150,7 +150,7 @@ class TolgeeService
                 if (is_array($value)) {
                     continue;
                 }
-                $import[] = ['name' => $key, 'namespace' => $namespace, 'translations' => ['en' => $value]];
+                $import[] = ['name' => $key, 'namespace' => $namespace, 'translations' => [$this->config["locale"] => $value]];
             }
         }
 
