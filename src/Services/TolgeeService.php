@@ -29,28 +29,21 @@ class TolgeeService
     public function syncTranslations(): true
     {
         $prepareWriteArray = [];
-        $initial = $this->tolgee->getTranslationsRequest(parse: true);
         $prepare = [];
 
         // Loop over translations pages, extract and prepare required data
-        for ($page = 0; $page < $initial['page']['totalPages']; $page++) {
-            $translations = $this->tolgee->getTranslationsRequest($page, true);
+        foreach ($this->tolgee->getAllTranslations() as $translationItem) {
+            $keyName = $translationItem['keyName'];
+            $filePath = $translationItem['keyNamespace'];
 
-            foreach ($translations['_embedded']['keys'] as $translationItem) {
-                $keyName = $translationItem['keyName'];
-                $filePath = $translationItem['keyNamespace'];
+            foreach ($translationItem['translations'] as $locale => $translation) {
+                if ($locale === $this->config["locale"] && !$this->config["override"]) continue;
 
-                foreach ($translationItem['translations'] as $locale => $translation) {
-                    if ($locale === $this->config["locale"] && !$this->config["override"]) {
-                        continue;
-                    }
+                $localPathName = Str::replace('/'.$this->config["locale"], '/' . $locale, $filePath);
+                $writeArray = [$keyName => $translation['text']];
 
-                    $localPathName = Str::replace('/'.$this->config["locale"], '/' . $locale, $filePath);
-                    $writeArray = [$keyName => $translation['text']];
-
-                    $prepare[$localPathName][] = $writeArray;
-                    $prepareWriteArray[$localPathName][] = $writeArray;
-                }
+                $prepare[$localPathName][] = $writeArray;
+                $prepareWriteArray[$localPathName][] = $writeArray;
             }
         }
 

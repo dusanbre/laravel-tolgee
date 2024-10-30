@@ -72,4 +72,18 @@ class Tolgee
 
         return $parse ? $request->json() : $request;
     }
+
+    public function getAllTranslations()
+    {
+        $translations = [];
+        $page = 0;
+        
+        do {
+            $response = $this->getTranslationsRequest($page, true);
+            $translations = array_merge($translations, $response['_embedded']['keys']);
+            $page++;
+        } while ($page < $response['page']['totalPages']);
+        
+        return $translations;
+    }
 }
