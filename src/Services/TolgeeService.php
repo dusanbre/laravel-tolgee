@@ -106,14 +106,10 @@ class TolgeeService
         foreach ($this->files->directories($this->config['lang_path']) as $langPath) {
             $locale = basename($langPath);
 
-            if ($locale !== $this->config["locale"]) {
-                continue;
-            }
+            if ($locale !== $this->config["locale"]) continue;
 
             foreach ($this->files->allfiles($langPath) as $file) {
-                $translations = include $file;
-
-                $prepare[$file->getPathname()] = Arr::dot($translations);
+                $prepare[$file->getPathname()] = Arr::dot(include $file);
             }
         }
 
@@ -121,35 +117,27 @@ class TolgeeService
         if ($this->files->exists($this->config['lang_path'] . '/vendor') && $withVendor) {
             foreach ($this->files->directories($this->config['lang_path'] . '/vendor') as $langPath) {
                 foreach ($this->files->allFiles($langPath . '/'.$this->config["locale"]) as $file) {
-                    $translations = include $file;
-
-                    $prepare[$file->getPathname()] = Arr::dot($translations);
+                    $prepare[$file->getPathname()] = Arr::dot(include $file);
                 }
             }
         }
 
         // Prepare json files translations
         foreach ($this->files->files($this->config['lang_path']) as $jsonFile) {
-            if (!str_contains($jsonFile, '.json')) {
-                continue;
-            }
+            if (!str_contains($jsonFile, '.json')) continue;
 
             $locale = basename($jsonFile, '.json');
 
-            if ($locale !== $this->config["locale"]) {
-                continue;
-            }
-
-            $translations = Lang::getLoader()->load($locale, '*', '*');
-            $prepare[$jsonFile->getPathname()] = Arr::dot($translations);
+            if ($locale !== $this->config["locale"]) continue;
+            
+            $prepare[$jsonFile->getPathname()] = Arr::dot(Lang::getLoader()->load($locale, '*', '*'));
         }
 
         // Remap everything into Tolgee request format
         foreach ($prepare as $namespace => $keys) {
             foreach ($keys as $key => $value) {
-                if (is_array($value)) {
-                    continue;
-                }
+                if (is_array($value)) continue;
+                
                 $import[] = ['name' => $key, 'namespace' => $namespace, 'translations' => [$this->config["locale"] => $value]];
             }
         }
