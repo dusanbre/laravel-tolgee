@@ -46,6 +46,16 @@ return [
      * Api key needs to have all permissions to manage project.
      */
     'api_key' => env('TOLGEE_API_KEY'),
+    
+    /**
+     * Base locale of the project.
+     */
+    'locale' => env('TOLGEE_LOCALE', 'en'),
+    
+    /**
+     * Override base locale translations files.
+     */
+    'override' => env('TOLGEE_OVERRIDE', false),
 ];
 ```
 

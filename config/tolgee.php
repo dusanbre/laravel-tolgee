@@ -27,12 +27,12 @@ return [
     'api_key' => env('TOLGEE_API_KEY'),
     
     /**
-     * Locale of the project.
+     * Base locale of the project.
      */
     'locale' => env('TOLGEE_LOCALE', 'en'),
     
     /**
-     * Override base language translations files.
+     * Override base locale translations files.
      */
     'override' => env('TOLGEE_OVERRIDE', false),
 ];
