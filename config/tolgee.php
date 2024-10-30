@@ -7,6 +7,11 @@ return [
      * Default is 'lang' it can be set to 'resources/lang'
      */
     'lang_path' => env('TOLGEE_LANG_PATH', 'lang'),
+    
+    /*
+     * Specify a language files subfolder, in order to filter specific language files
+     */
+    'lang_subfolder' => env('TOLGEE_LANG_SUBFOLDER', null),
 
     /*
      * Host to you Tolgee service instance

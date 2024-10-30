@@ -103,30 +103,36 @@ class TolgeeService
             $locale = basename($langPath);
 
             if ($locale !== $this->config["locale"]) continue;
+            
+            if(!is_null($this->config["lang_subfolder"])) {
+                $langPath .= '/'.$this->config["lang_subfolder"];
+            }
 
             foreach ($this->files->allfiles($langPath) as $file) {
                 $prepare[$file->getPathname()] = Arr::dot(include $file);
             }
         }
 
-        // Prepare vendor translations
-        if ($this->files->exists($this->config['lang_path'] . '/vendor') && $withVendor) {
-            foreach ($this->files->directories($this->config['lang_path'] . '/vendor') as $langPath) {
-                foreach ($this->files->allFiles($langPath . '/'.$this->config["locale"]) as $file) {
-                    $prepare[$file->getPathname()] = Arr::dot(include $file);
+        if(is_null($this->config["lang_subfolder"])) {
+            // Prepare vendor translations
+            if ($this->files->exists($this->config['lang_path'] . '/vendor') && $withVendor) {
+                foreach ($this->files->directories($this->config['lang_path'] . '/vendor') as $langPath) {
+                    foreach ($this->files->allFiles($langPath . '/'.$this->config["locale"]) as $file) {
+                        $prepare[$file->getPathname()] = Arr::dot(include $file);
+                    }
                 }
             }
-        }
 
-        // Prepare json files translations
-        foreach ($this->files->files($this->config['lang_path']) as $jsonFile) {
-            if (!str_contains($jsonFile, '.json')) continue;
+            // Prepare json files translations
+            foreach ($this->files->files($this->config['lang_path']) as $jsonFile) {
+                if (!str_contains($jsonFile, '.json')) continue;
 
-            $locale = basename($jsonFile, '.json');
+                $locale = basename($jsonFile, '.json');
 
-            if ($locale !== $this->config["locale"]) continue;
-            
-            $prepare[$jsonFile->getPathname()] = Arr::dot(Lang::getLoader()->load($locale, '*', '*'));
+                if ($locale !== $this->config["locale"]) continue;
+                
+                $prepare[$jsonFile->getPathname()] = Arr::dot(Lang::getLoader()->load($locale, '*', '*'));
+            }
         }
 
         // Remap everything into Tolgee request format
