@@ -30,5 +30,9 @@ return [
      * Locale of the project.
      */
     'locale' => env('TOLGEE_LOCALE', 'en'),
-
+    
+    /**
+     * Override base language translations files.
+     */
+    'override' => env('TOLGEE_OVERRIDE', false),
 ];

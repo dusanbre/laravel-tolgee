@@ -41,7 +41,7 @@ class TolgeeService
                 $filePath = $translationItem['keyNamespace'];
 
                 foreach ($translationItem['translations'] as $locale => $translation) {
-                    if ($locale === $this->config["locale"]) {
+                    if ($locale === $this->config["locale"] && !$this->config["override"]) {
                         continue;
                     }
 
