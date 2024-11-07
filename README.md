@@ -28,11 +28,12 @@ return [
      * Default is 'lang' it can be set to 'resources/lang'
      */
     'lang_path' => env('TOLGEE_LANG_PATH', 'lang'),
-    
+
     /*
-     * Specify a language files subfolder, in order to filter specific language files
+     * Specify a language files subfolder, in order to filter specific language files.Please be aware that this applies to subfolders within your base local folders.
+     * So if you have folder structure like `lang/en/messages/...`, you can set this env variable to `messages` and package will use only files from messages folder.
      */
-    'lang_subfolder' => env('TOLGEE_LANG_SUBFOLDER', null),
+    'lang_subfolder' => env('TOLGEE_LANG_SUBFOLDER'),
 
     /*
      * Host to you Tolgee service instance
@@ -51,19 +52,21 @@ return [
      * Api key needs to have all permissions to manage project.
      */
     'api_key' => env('TOLGEE_API_KEY'),
-    
+
     /**
      * Base locale of the project.
+     * Please note that the locale you set here should match the base language in your project.
      */
     'locale' => env('TOLGEE_LOCALE', 'en'),
-    
+
     /**
      * Override base locale translations files.
      */
     'override' => env('TOLGEE_OVERRIDE', false),
-    
+
     /**
-     * Accepted states for translations.
+     * Accepted translation states. Check Tolgee documentation for available states.
+     * Ex: REVIEWED,DISABLED,UNTRANSLATED,TRANSLATED
      */
     'accepted_states' => explode(",", env('TOLGEE_ACCEPTED_STATES', 'REVIEWED')),
 ];
@@ -158,7 +161,6 @@ When you setup is dockerized, you will need to set TOLGEE_HOST for docker intern
 
 ## Limitations
 
-You are need to use English as base language.</br>
 All operations are constrained to one project.
 
 This will be fixed/implemented in the future.

@@ -29,7 +29,7 @@ class TolgeeService
     public function syncTranslations(): true
     {
         $prepareWriteArray = [];
-        $prepare = [];
+
 
         // Loop over translations pages, extract and prepare required data
         foreach ($this->tolgee->getAllTranslations() as $translationItem) {
@@ -38,14 +38,15 @@ class TolgeeService
 
             foreach ($translationItem['translations'] as $locale => $translation) {
                 if (
-                    ($locale === $this->config["locale"] && !$this->config["override"]) ||
-                    ($locale !== $this->config["locale"] && !in_array($translation['state'], $this->config["accepted_states"]))
-                ) continue;
+                    ($locale === $this->config['locale'] && !$this->config['override']) ||
+                    ($locale !== $this->config['locale'] && !in_array($translation['state'], $this->config['accepted_states']))
+                ) {
+                    continue;
+                }
 
                 $localPathName = Str::replace('/'.$this->config["locale"], '/' . $locale, $filePath);
                 $writeArray = [$keyName => $translation['text']];
 
-                $prepare[$localPathName][] = $writeArray;
                 $prepareWriteArray[$localPathName][] = $writeArray;
             }
         }
@@ -102,10 +103,12 @@ class TolgeeService
         foreach ($this->files->directories($this->config['lang_path']) as $langPath) {
             $locale = basename($langPath);
 
-            if ($locale !== $this->config["locale"]) continue;
-            
-            if(!is_null($this->config["lang_subfolder"])) {
-                $langPath .= '/'.$this->config["lang_subfolder"];
+            if ($locale !== $this->config['locale']) {
+                continue;
+            }
+
+            if ($this->config['lang_subfolder']) {
+                $langPath .= '/'.$this->config['lang_subfolder'];
             }
 
             foreach ($this->files->allfiles($langPath) as $file) {
@@ -113,11 +116,11 @@ class TolgeeService
             }
         }
 
-        if(is_null($this->config["lang_subfolder"])) {
+        if (!$this->config['lang_subfolder']) {
             // Prepare vendor translations
             if ($this->files->exists($this->config['lang_path'] . '/vendor') && $withVendor) {
                 foreach ($this->files->directories($this->config['lang_path'] . '/vendor') as $langPath) {
-                    foreach ($this->files->allFiles($langPath . '/'.$this->config["locale"]) as $file) {
+                    foreach ($this->files->allFiles($langPath . '/'.$this->config['locale']) as $file) {
                         $prepare[$file->getPathname()] = Arr::dot(include $file);
                     }
                 }
@@ -125,12 +128,16 @@ class TolgeeService
 
             // Prepare json files translations
             foreach ($this->files->files($this->config['lang_path']) as $jsonFile) {
-                if (!str_contains($jsonFile, '.json')) continue;
+                if (!str_contains($jsonFile, '.json')) {
+                    continue;
+                }
 
                 $locale = basename($jsonFile, '.json');
 
-                if ($locale !== $this->config["locale"]) continue;
-                
+                if ($locale !== $this->config['locale']) {
+                    continue;
+                }
+
                 $prepare[$jsonFile->getPathname()] = Arr::dot(Lang::getLoader()->load($locale, '*', '*'));
             }
         }
@@ -138,9 +145,11 @@ class TolgeeService
         // Remap everything into Tolgee request format
         foreach ($prepare as $namespace => $keys) {
             foreach ($keys as $key => $value) {
-                if (is_array($value)) continue;
-                
-                $import[] = ['name' => $key, 'namespace' => $namespace, 'translations' => [$this->config["locale"] => $value]];
+                if (is_array($value)) {
+                    continue;
+                }
+
+                $import[] = ['name' => $key, 'namespace' => $namespace, 'translations' => [$this->config['locale'] => $value]];
             }
         }
 
