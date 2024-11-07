@@ -2,6 +2,18 @@
 
 All notable changes to `laravel-tolgee` will be documented in this file.
 
+## v1.0.4 - 2024-11-07
+
+### What's Changed
+
+* Added some implementation to better suits different projects by @andreazorzi in https://github.com/dusanbre/laravel-tolgee/pull/6
+
+### New Contributors
+
+* @andreazorzi made their first contribution in https://github.com/dusanbre/laravel-tolgee/pull/6
+
+**Full Changelog**: https://github.com/dusanbre/laravel-tolgee/compare/v1.0.3...v1.0.4
+
 ## v1.0.3 - 2024-09-30
 
 ### What's Changed
