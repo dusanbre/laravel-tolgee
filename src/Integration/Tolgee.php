@@ -49,6 +49,20 @@ class Tolgee
             ->delete('/v2/projects/{project}/keys', ['ids' => $data]);
     }
 
+    public function getAllTranslations(): array
+    {
+        $translations = [];
+        $page = 0;
+
+        do {
+            $response = $this->getTranslationsRequest($page, true);
+            $translations = array_merge($translations, $response['_embedded']['keys']);
+            $page++;
+        } while ($page < $response['page']['totalPages']);
+
+        return $translations;
+    }
+
     public function getTranslationsRequest(int $page = 0, bool $parse = false): PromiseInterface|Response|array
     {
         $languages = Http::withHeaders($this->headers)

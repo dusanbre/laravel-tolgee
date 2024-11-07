@@ -29,28 +29,25 @@ class TolgeeService
     public function syncTranslations(): true
     {
         $prepareWriteArray = [];
-        $initial = $this->tolgee->getTranslationsRequest(parse: true);
-        $prepare = [];
+
 
         // Loop over translations pages, extract and prepare required data
-        for ($page = 0; $page < $initial['page']['totalPages']; $page++) {
-            $translations = $this->tolgee->getTranslationsRequest($page, true);
+        foreach ($this->tolgee->getAllTranslations() as $translationItem) {
+            $keyName = $translationItem['keyName'];
+            $filePath = $translationItem['keyNamespace'];
 
-            foreach ($translations['_embedded']['keys'] as $translationItem) {
-                $keyName = $translationItem['keyName'];
-                $filePath = $translationItem['keyNamespace'];
-
-                foreach ($translationItem['translations'] as $locale => $translation) {
-                    if ($locale === 'en') {
-                        continue;
-                    }
-
-                    $localPathName = Str::replace('/en', '/' . $locale, $filePath);
-                    $writeArray = [$keyName => $translation['text']];
-
-                    $prepare[$localPathName][] = $writeArray;
-                    $prepareWriteArray[$localPathName][] = $writeArray;
+            foreach ($translationItem['translations'] as $locale => $translation) {
+                if (
+                    ($locale === $this->config['locale'] && !$this->config['override']) ||
+                    ($locale !== $this->config['locale'] && !in_array($translation['state'], $this->config['accepted_states']))
+                ) {
+                    continue;
                 }
+
+                $localPathName = Str::replace('/'.$this->config["locale"], '/' . $locale, $filePath);
+                $writeArray = [$keyName => $translation['text']];
+
+                $prepareWriteArray[$localPathName][] = $writeArray;
             }
         }
 
@@ -106,42 +103,43 @@ class TolgeeService
         foreach ($this->files->directories($this->config['lang_path']) as $langPath) {
             $locale = basename($langPath);
 
-            if ($locale !== 'en') {
+            if ($locale !== $this->config['locale']) {
                 continue;
+            }
+
+            if ($this->config['lang_subfolder']) {
+                $langPath .= '/'.$this->config['lang_subfolder'];
             }
 
             foreach ($this->files->allfiles($langPath) as $file) {
-                $translations = include $file;
-
-                $prepare[$file->getPathname()] = Arr::dot($translations);
+                $prepare[$file->getPathname()] = Arr::dot(include $file);
             }
         }
 
-        // Prepare vendor translations
-        if ($this->files->exists($this->config['lang_path'] . '/vendor') && $withVendor) {
-            foreach ($this->files->directories($this->config['lang_path'] . '/vendor') as $langPath) {
-                foreach ($this->files->allFiles($langPath . '/en') as $file) {
-                    $translations = include $file;
-
-                    $prepare[$file->getPathname()] = Arr::dot($translations);
+        if (!$this->config['lang_subfolder']) {
+            // Prepare vendor translations
+            if ($this->files->exists($this->config['lang_path'] . '/vendor') && $withVendor) {
+                foreach ($this->files->directories($this->config['lang_path'] . '/vendor') as $langPath) {
+                    foreach ($this->files->allFiles($langPath . '/'.$this->config['locale']) as $file) {
+                        $prepare[$file->getPathname()] = Arr::dot(include $file);
+                    }
                 }
             }
-        }
 
-        // Prepare json files translations
-        foreach ($this->files->files($this->config['lang_path']) as $jsonFile) {
-            if (!str_contains($jsonFile, '.json')) {
-                continue;
+            // Prepare json files translations
+            foreach ($this->files->files($this->config['lang_path']) as $jsonFile) {
+                if (!str_contains($jsonFile, '.json')) {
+                    continue;
+                }
+
+                $locale = basename($jsonFile, '.json');
+
+                if ($locale !== $this->config['locale']) {
+                    continue;
+                }
+
+                $prepare[$jsonFile->getPathname()] = Arr::dot(Lang::getLoader()->load($locale, '*', '*'));
             }
-
-            $locale = basename($jsonFile, '.json');
-
-            if ($locale !== 'en') {
-                continue;
-            }
-
-            $translations = Lang::getLoader()->load($locale, '*', '*');
-            $prepare[$jsonFile->getPathname()] = Arr::dot($translations);
         }
 
         // Remap everything into Tolgee request format
@@ -150,7 +148,8 @@ class TolgeeService
                 if (is_array($value)) {
                     continue;
                 }
-                $import[] = ['name' => $key, 'namespace' => $namespace, 'translations' => ['en' => $value]];
+
+                $import[] = ['name' => $key, 'namespace' => $namespace, 'translations' => [$this->config['locale'] => $value]];
             }
         }
 
