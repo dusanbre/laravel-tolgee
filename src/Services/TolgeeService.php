@@ -45,9 +45,13 @@ class TolgeeService
                 }
 
                 $localPathName = Str::replace('/'.$this->config["locale"], '/' . $locale, $filePath);
-                $writeArray = [$keyName => $translation['text']];
-
-                $prepareWriteArray[$localPathName][] = $writeArray;
+                
+                if(empty($prepareWriteArray[$localPathName])){
+                    $lang_file_name = Str::replace([$this->config["lang_path"]."/".$locale."/", ".php", ".json"], '', $localPathName);
+                    $prepareWriteArray[$localPathName] = Lang::get($lang_file_name, locale: $locale);
+                }
+                
+                self::setValueByDotNotation($prepareWriteArray[$localPathName], $keyName, $translation['text']);
             }
         }
 
@@ -59,13 +63,13 @@ class TolgeeService
                             return {{translations}};
                             
                             EOT;
-            $prettyWriteArray = VarExport::pretty(Arr::undot(Arr::collapse($writeArray)), ['array-align' => true]);
+            $prettyWriteArray = VarExport::pretty($writeArray, ['array-align' => true]);
             $fileContent = Str::replace('{{translations}}', $prettyWriteArray, $fileContent);
 
             $this->files->ensureDirectoryExists(dirname($localPathName));
 
             Str::contains($localPathName, '.json')
-                ? IO::write(JSON::jsonEncode(Arr::undot(Arr::collapse($writeArray))), $localPathName)
+                ? IO::write(JSON::jsonEncode($writeArray), $localPathName)
                 : IO::write($fileContent, $localPathName);
         }
 
@@ -154,5 +158,22 @@ class TolgeeService
         }
 
         return $this->tolgee->importKeysRequest($import);
+    }
+    
+    /**
+     * Set a value in an array according to the dot notation provided
+     */
+    private static function setValueByDotNotation(&$array, $notation, $value) {
+        $keys = explode('.', $notation);
+        $current = &$array;
+        
+        foreach ($keys as $key) {
+            if (!isset($current[$key])) {
+                $current[$key] = [];
+            }
+            $current = &$current[$key];
+        }
+        
+        $current = $value;
     }
 }
