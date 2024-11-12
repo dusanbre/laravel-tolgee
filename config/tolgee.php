@@ -47,4 +47,9 @@ return [
      * Ex: REVIEWED,DISABLED,UNTRANSLATED,TRANSLATED
      */
     'accepted_states' => explode(",", env('TOLGEE_ACCEPTED_STATES', 'REVIEWED')),
+
+    /**
+     * Makes translations files prettier
+     */
+    'pretty_file' => env('TOLGEE_PRETTY_FILE', true),
 ];

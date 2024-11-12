@@ -61,7 +61,7 @@ class TolgeeService
                             return {{translations}};
                             
                             EOT;
-            $prettyWriteArray = VarExport::pretty($writeArray, ['array-align' => true]);
+            $prettyWriteArray = VarExport::pretty($writeArray, ['array-align' => $this->config['pretty_file']]);
             $fileContent = Str::replace('{{translations}}', $prettyWriteArray, $fileContent);
 
             $this->files->ensureDirectoryExists(dirname($localPathName));
