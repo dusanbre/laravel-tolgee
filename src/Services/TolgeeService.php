@@ -29,8 +29,7 @@ class TolgeeService
     public function syncTranslations(): true
     {
         $prepareWriteArray = [];
-
-
+        
         // Loop over translations pages, extract and prepare required data
         foreach ($this->tolgee->getAllTranslations() as $translationItem) {
             $keyName = $translationItem['keyName'];
@@ -47,8 +46,7 @@ class TolgeeService
                 $localPathName = Str::replace('/'.$this->config["locale"], '/' . $locale, $filePath);
                 
                 if(empty($prepareWriteArray[$localPathName])){
-                    $lang_file_name = Str::replace([$this->config["lang_path"]."/".$locale."/", ".php", ".json"], '', $localPathName);
-                    $prepareWriteArray[$localPathName] = Lang::get($lang_file_name, locale: $locale);
+                    $prepareWriteArray[$localPathName] = $this->getFileTranslationsArray($localPathName);
                 }
                 
                 self::setValueByDotNotation($prepareWriteArray[$localPathName], $keyName, $translation['text']);
@@ -158,6 +156,32 @@ class TolgeeService
         }
 
         return $this->tolgee->importKeysRequest($import);
+    }
+    
+    /**
+     * Get an array of translations from a file
+     */
+    private function getFileTranslationsArray($filePath){
+        $data = [];
+        
+        if(Str::contains($filePath, '.json')){
+            $lang_path = $this->config['lang_path'];
+            
+            preg_match("/$lang_path\/([^.]+)/i", $filePath, $language);
+            
+            $data = Lang::getLoader()->load($language[1], '*', '*');
+        }
+        else{
+            $translation_key = preg_replace("/{$this->config["lang_path"]}\/[^\/]+\/|.php/i", '', $filePath);
+            preg_match("/{$this->config["lang_path"]}\/([^\/]+)\//i", $filePath, $language);
+            $data = Lang::get($translation_key, locale: $language[1], fallback: false);
+            
+            if($data == $translation_key){
+                $data = [];
+            }
+        }
+        
+        return $data;
     }
     
     /**
