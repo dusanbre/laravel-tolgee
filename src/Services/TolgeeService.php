@@ -102,20 +102,14 @@ class TolgeeService
         $import = [];
 
         // Prepare local .php files
-        foreach ($this->files->directories($this->config['lang_path']) as $langPath) {
-            $locale = basename($langPath);
-
-            if ($locale !== $this->config['locale']) {
-                continue;
-            }
-
-            if ($this->config['lang_subfolder']) {
-                $langPath .= '/'.$this->config['lang_subfolder'];
-            }
-
-            foreach ($this->files->allfiles($langPath) as $file) {
-                $prepare[$file->getPathname()] = Arr::dot(include $file);
-            }
+        $langPath = $this->config['lang_path']."/".$this->config['locale'];
+        
+        if ($this->config['lang_subfolder']) {
+            $langPath .= '/'.$this->config['lang_subfolder'];
+        }
+        
+        foreach ($this->files->allfiles($langPath) as $file) {
+            $prepare[$file->getPathname()] = Arr::dot(include $file);
         }
 
         if (!$this->config['lang_subfolder']) {
