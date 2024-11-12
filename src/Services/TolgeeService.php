@@ -38,7 +38,7 @@ class TolgeeService
             foreach ($translationItem['translations'] as $locale => $translation) {
                 if (
                     ($locale === $this->config['locale'] && !$this->config['override']) ||
-                    ($locale !== $this->config['locale'] && !in_array($translation['state'], $this->config['accepted_states']))
+                    (!in_array($translation['state'], $this->config['accepted_states']))
                 ) {
                     continue;
                 }
