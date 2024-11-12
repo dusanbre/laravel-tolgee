@@ -158,21 +158,15 @@ class TolgeeService
     private function getFileTranslationsArray($filePath){
         $data = [];
         
+        if(!$this->files->exists($filePath)){
+            return $data;
+        }
+        
         if(Str::contains($filePath, '.json')){
-            $lang_path = $this->config['lang_path'];
-            
-            preg_match("/$lang_path\/([^.]+)/i", $filePath, $language);
-            
-            $data = Lang::getLoader()->load($language[1], '*', '*');
+            $data = json_decode($this->files->get($filePath), true);
         }
         else{
-            $translation_key = preg_replace("/{$this->config["lang_path"]}\/[^\/]+\/|.php/i", '', $filePath);
-            preg_match("/{$this->config["lang_path"]}\/([^\/]+)\//i", $filePath, $language);
-            $data = Lang::get($translation_key, locale: $language[1], fallback: false);
-            
-            if($data == $translation_key){
-                $data = [];
-            }
+            $data = include $filePath;
         }
         
         return $data;
