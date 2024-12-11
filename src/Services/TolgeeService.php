@@ -63,12 +63,8 @@ class TolgeeService
                             EOT;
             $prettyWriteArray = VarExport::pretty($writeArray, ['array-align' => $this->config['pretty_file']]);
             $fileContent = Str::replace('{{translations}}', $prettyWriteArray, $fileContent);
-
-            $this->files->ensureDirectoryExists(dirname($localPathName));
-
-            Str::contains($localPathName, '.json')
-                ? IO::write(JSON::jsonEncode($writeArray), $localPathName)
-                : IO::write($fileContent, $localPathName);
+            
+            IO::write($filePath, Str::contains($localPathName, '.json') ? JSON::jsonEncode($writeArray) : $fileContent);
         }
 
         return true;
