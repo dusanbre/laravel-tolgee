@@ -152,15 +152,15 @@ class TolgeeService
     private function getFileTranslationsArray($filePath){
         $data = [];
         
-        if(!$this->files->exists($filePath)){
+        if(!is_file(base_path($filePath))){
             return $data;
         }
         
         if(Str::contains($filePath, '.json')){
-            $data = json_decode($this->files->get($filePath), true);
+            $data = json_decode(IO::read($filePath), true);
         }
         else{
-            $data = include $filePath;
+            $data = include base_path($filePath);
         }
         
         return $data;
