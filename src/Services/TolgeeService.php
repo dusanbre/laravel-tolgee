@@ -110,7 +110,7 @@ class TolgeeService
 
         if (!$this->config['lang_subfolder']) {
             // Prepare vendor translations
-            if ($this->files->exists($this->config['lang_path'] . '/vendor') && $withVendor) {
+            if (is_file(base_path($this->config['lang_path'] . '/vendor')) && $withVendor) {
                 foreach ($this->files->allFiles($this->config['lang_path'] . '/vendor/'.$this->config['locale']) as $file) {
                     $prepare[$file->getPathname()] = Arr::dot(include $file);
                 }
