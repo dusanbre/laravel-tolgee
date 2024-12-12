@@ -9,7 +9,15 @@ class IO
      */
     public static function write(string $content, string $path): void
     {
-        file_put_contents($path, $content . PHP_EOL);
+        $directory_path = dirname(base_path($path));
+        
+        if(!is_dir($directory_path)){
+            mkdir($directory_path);
+        }
+        
+        $file = fopen(base_path($path), 'w');
+        fwrite($file, $content . PHP_EOL);
+        fclose($file);
     }
 
     /**
@@ -21,6 +29,10 @@ class IO
             return false;
         }
 
-        return file_get_contents($path);
+        $file = fopen($path, 'r');
+        $content = fread($file, filesize($path));
+        fclose($file);
+        
+        return $content;
     }
 }
