@@ -64,7 +64,7 @@ class TolgeeService
             $prettyWriteArray = VarExport::pretty($writeArray, ['array-align' => $this->config['pretty_file']]);
             $fileContent = Str::replace('{{translations}}', $prettyWriteArray, $fileContent);
             
-            IO::write($filePath, Str::contains($localPathName, '.json') ? JSON::jsonEncode($writeArray) : $fileContent);
+            IO::write(Str::contains($localPathName, '.json') ? JSON::jsonEncode($writeArray) : $fileContent, $localPathName);
         }
 
         return true;

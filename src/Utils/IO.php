@@ -9,13 +9,13 @@ class IO
      */
     public static function write(string $content, string $path): void
     {
-        $directory_path = dirname($path);
+        $directory_path = dirname(base_path($path));
         
         if(!is_dir($directory_path)){
             mkdir($directory_path);
         }
         
-        $file = fopen($path, 'w');
+        $file = fopen(base_path($path), 'w');
         fwrite($file, $content . PHP_EOL);
         fclose($file);
     }
