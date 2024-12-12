@@ -157,7 +157,7 @@ class TolgeeService
         }
         
         if(Str::contains($filePath, '.json')){
-            $data = json_decode(IO::read($filePath), true);
+            $data = JSON::jsonDecode(IO::read($filePath));
         }
         else{
             $data = include base_path($filePath);
