@@ -65,7 +65,7 @@ class TolgeeService
             $this->files->ensureDirectoryExists(dirname($localPathName));
 
             Str::contains($localPathName, '.json')
-                ? IO::write(JSON::jsonEncode(Arr::undot(Arr::collapse($writeArray))), $localPathName)
+                ? IO::write(JSON::jsonEncode(Arr::collapse($writeArray)), $localPathName)
                 : IO::write($fileContent, $localPathName);
         }
 
