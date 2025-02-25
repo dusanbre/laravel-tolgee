@@ -2,6 +2,10 @@
 
 All notable changes to `laravel-tolgee` will be documented in this file.
 
+## v1.0.6 - 2025-02-25
+
+**Full Changelog**: https://github.com/dusanbre/laravel-tolgee/compare/1.0.5...v1.0.6
+
 ## 1.0.5 - 2025-02-12
 
 ### What's Changed
