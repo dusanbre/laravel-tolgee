@@ -2,6 +2,14 @@
 
 All notable changes to `laravel-tolgee` will be documented in this file.
 
+## v1.0.7 - 2025-05-15
+
+### What's Changed
+
+* Bump dependabot/fetch-metadata from 2.3.0 to 2.4.0 by @dependabot in https://github.com/dusanbre/laravel-tolgee/pull/11
+
+**Full Changelog**: https://github.com/dusanbre/laravel-tolgee/compare/1.0.5...v1.0.7
+
 ## v1.0.6 - 2025-02-25
 
 **Full Changelog**: https://github.com/dusanbre/laravel-tolgee/compare/1.0.5...v1.0.6
