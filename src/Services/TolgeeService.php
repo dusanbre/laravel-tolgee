@@ -44,7 +44,13 @@ class TolgeeService
                     continue;
                 }
 
-                $localPathName = Str::replace('/'.$this->config["locale"], '/' . $locale, $filePath);
+
+                $localPathName = Str::replace(
+                    DIRECTORY_SEPARATOR . $this->config["locale"],
+                    DIRECTORY_SEPARATOR . $locale,
+                    $filePath
+                );
+
                 $writeArray = [$keyName => $translation['text']];
 
                 $prepareWriteArray[$localPathName][] = $writeArray;
@@ -55,9 +61,9 @@ class TolgeeService
         foreach ($prepareWriteArray as $localPathName => $writeArray) {
             $fileContent = <<<'EOT'
                             <?php
-                            
+
                             return {{translations}};
-                            
+
                             EOT;
             $prettyWriteArray = VarExport::pretty(Arr::undot(Arr::collapse($writeArray)), ['array-align' => true]);
             $fileContent = Str::replace('{{translations}}', $prettyWriteArray, $fileContent);
