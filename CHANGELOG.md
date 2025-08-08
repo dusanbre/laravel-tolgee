@@ -2,6 +2,19 @@
 
 All notable changes to `laravel-tolgee` will be documented in this file.
 
+## 1.1.0 - 2025-08-08
+
+### What's Changed
+
+* Bump stefanzweifel/git-auto-commit-action from 5 to 6 by @dependabot[bot] in https://github.com/dusanbre/laravel-tolgee/pull/12
+* Refactor `TolgeeService` for improved path handling and formatting co… by @aldrahastur in https://github.com/dusanbre/laravel-tolgee/pull/13
+
+### New Contributors
+
+* @aldrahastur made their first contribution in https://github.com/dusanbre/laravel-tolgee/pull/13
+
+**Full Changelog**: https://github.com/dusanbre/laravel-tolgee/compare/v1.0.9...v1.1.0
+
 ## v1.0.9 - 2025-05-15
 
 **Full Changelog**: https://github.com/dusanbre/laravel-tolgee/compare/v1.0.8...v1.0.9
