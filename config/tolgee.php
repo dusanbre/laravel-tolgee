@@ -47,4 +47,14 @@ return [
      * Ex: REVIEWED,DISABLED,UNTRANSLATED,TRANSLATED
      */
     'accepted_states' => explode(",", env('TOLGEE_ACCEPTED_STATES', 'REVIEWED')),
+
+    /**
+     * HTTP Request Timeout
+     */
+    'timeout' => env('TOLGEE_TIMEOUT', 30),
+
+    /**
+     * Tolgee amount of translations per request
+     */
+    'size' => env('TOLGEE_PAGE_SIZE', 1000),
 ];
