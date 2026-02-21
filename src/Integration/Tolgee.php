@@ -12,6 +12,8 @@ class Tolgee
 {
     private array $headers = [];
     private array $urlParams = [];
+    private int $timeout = 30;
+    private int $size = 2000;
 
     private string $host = '';
 
@@ -20,11 +22,16 @@ class Tolgee
         $this->host = Config::get('tolgee.host');
         $this->urlParams = ['project' => Config::get('tolgee.project_id')];
         $this->headers = ['X-API-Key' => Config::get('tolgee.api_key')];
+        $this->timeout = Config::get('tolgee.timeout', 30);
+        $this->size = Config::get('tolgee.size', 30);
+
     }
 
     public function importKeysRequest(array $data): PromiseInterface|Response
     {
         return Http::withHeaders($this->headers)
+            ->timeout($this->timeout)
+            ->connectTimeout($this->timeout)
             ->withUrlParameters($this->urlParams)
             ->baseUrl($this->host)
             ->post('/v2/projects/{project}/keys/import', ['keys' => $data]);
@@ -33,6 +40,8 @@ class Tolgee
     public function getKeysRequest(int $page = 0, bool $parse = false)
     {
         $request = Http::withHeaders($this->headers)
+            ->timeout($this->timeout)
+            ->connectTimeout($this->timeout)
             ->withUrlParameters($this->urlParams)
             ->baseUrl($this->host)
             ->withQueryParameters(['page' => $page])
@@ -44,6 +53,8 @@ class Tolgee
     public function deleteKeysRequest(array $data): PromiseInterface|Response
     {
         return Http::withHeaders($this->headers)
+            ->timeout($this->timeout)
+            ->connectTimeout($this->timeout)
             ->withUrlParameters($this->urlParams)
             ->baseUrl($this->host)
             ->delete('/v2/projects/{project}/keys', ['ids' => $data]);
@@ -66,8 +77,10 @@ class Tolgee
     public function getTranslationsRequest(int $page = 0, bool $parse = false): PromiseInterface|Response|array
     {
         $languages = Http::withHeaders($this->headers)
+            ->timeout($this->timeout)
+            ->connectTimeout($this->timeout)
             ->withUrlParameters($this->urlParams)
-            ->withQueryParameters(['size' => 1000])
+            ->withQueryParameters(['size' => $this->size])
             ->baseUrl($this->host)
             ->get('v2/projects/{project}/languages')
             ->json('_embedded.languages');
@@ -80,6 +93,8 @@ class Tolgee
         }
 
         $request = Http::withHeaders($this->headers)
+            ->timeout($this->timeout)
+            ->connectTimeout($this->timeout)
             ->withUrlParameters($this->urlParams)
             ->baseUrl($this->host)
             ->get('/v2/projects/{project}/translations?' . $queryLanguages . 'page=' . $page);
